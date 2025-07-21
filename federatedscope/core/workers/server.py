@@ -1,5 +1,6 @@
 import logging
 import copy
+import math
 import os
 import sys
 
@@ -22,6 +23,19 @@ logger = logging.getLogger(__name__)
 if get_ds_rank() == 0:
     logger.setLevel(logging.INFO)
 
+
+def replace_nan(obj):
+    if isinstance(obj, dict):
+        return {k: replace_nan(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [replace_nan(v) for v in obj]
+    elif isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return 0
+        else:
+            return obj
+    else:
+        return obj
 
 class Server(BaseServer):
     """
@@ -604,6 +618,7 @@ class Server(BaseServer):
                     rnd=round,
                     role='Server #',
                     forms=self._cfg.eval.report)
+                formatted_logs = replace_nan(formatted_logs)
                 if merge_type == "unseen":
                     for key, val in copy.deepcopy(formatted_logs).items():
                         if isinstance(val, dict):

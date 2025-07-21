@@ -32,6 +32,7 @@ train:
   local_update_steps: 10
   batch_or_epoch: batch
   optimizer:
+    type: AdamW
     lr: 2e-2
   is_enable_half: True
 criterion:
@@ -43,3 +44,5 @@ eval:
   metrics: ['accuracy']
   count_flops: False
   best_res_update_round_wise_key: 'val_accuracy'
+wandb:
+  use: True

@@ -31,7 +31,7 @@ class ClientsAvgAggregator(Aggregator):
         recover_fun = agg_info['recover_fun'] if (
             'recover_fun' in agg_info and self.cfg.federate.use_ss) else None
         avg_model = self._para_weighted_avg(models, recover_fun=recover_fun)
-
+        #print("Aggregated model parameters:", agg_info["client_feedback"][0][1].keys())
         return avg_model
 
     def update(self, model_parameters):

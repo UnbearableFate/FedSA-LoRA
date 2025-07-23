@@ -229,7 +229,7 @@ class AdapterModel(nn.Module):
                 raise RuntimeError(e)
         return res
 
-    def state_dict(self, return_trainable=True, *args, **kwargs):
+    def state_dict(self, return_trainable=True, communication_name=None, *args, **kwargs):
         """
         Returns the state dict of the wrapped model.
 
@@ -247,7 +247,7 @@ class AdapterModel(nn.Module):
             included. Otherwise, all parameters are included.
         """
         if return_trainable:
-            return self.get_trainable_state_dict()
+            return self.get_trainable_state_dict(communication_name=communication_name)
         else:
             return self.model.state_dict(*args, **kwargs)
 
@@ -264,7 +264,7 @@ class AdapterModel(nn.Module):
         """
         return self.model.load_state_dict(state_dict, strict=False)
 
-    def get_trainable_state_dict(self):
+    def get_trainable_state_dict(self,communication_name=None):
         """
         Returns only the trainable parameters of the wrapped model.
 
@@ -277,7 +277,7 @@ class AdapterModel(nn.Module):
         """
         grad_params = []
         for name, param in self.model.named_parameters():
-            if param.requires_grad:
+            if param.requires_grad and (communication_name is None or communication_name in name):
                 grad_params.append(name)
         model_state_dict = self.model.state_dict()
         new_state_dict = OrderedDict()

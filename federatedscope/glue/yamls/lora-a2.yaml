@@ -5,6 +5,8 @@ early_stop:
   patience: 0
 federate:
   freeze_A: False
+  alternate_training: False
+  alternate_communication: True
   mode: standalone
   client_num: 3
   total_round_num: 1000

@@ -20,7 +20,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-class LoRA2GLUETrainer(GeneralTorchTrainer):
+class LoRA2PlusGLUETrainer(GeneralTorchTrainer):
     def _hook_on_fit_start_numerical_precision(self, ctx):
         if self.cfg.train.is_enable_half:
             if not ctx.cfg.llm.deepspeed.use:
@@ -76,8 +76,7 @@ class LoRA2GLUETrainer(GeneralTorchTrainer):
                 # LoRA-A2: 每轮交替只训练A或B
                 round_num = ctx.round # 若无ctx.round可根据实际传递
                 train_A = (round_num % 2 == 0)
-                ctx.lora_train_part = "A" if train_A else "B"
-                self.train_A: bool = train_A
+                ctx.lora_train_part = CtxVar("lora_A" if train_A else "lora_B", LIFECYCLE.ROUTINE)
                 for name, param in ctx.model.named_parameters():
                     if "lora_A" in name:
                         param.requires_grad = train_A
@@ -91,12 +90,18 @@ class LoRA2GLUETrainer(GeneralTorchTrainer):
         ctx.num_samples = CtxVar(0, LIFECYCLE.ROUTINE)
         ctx.ys_true = CtxVar([], LIFECYCLE.ROUTINE)
         ctx.ys_pred = CtxVar([], LIFECYCLE.ROUTINE)    # modified by me, for GLUE
-
+        
+        if not hasattr(ctx, 'total_steps'):
+            ctx.total_steps = 0
+        ctx.local_steps = CtxVar(0, LIFECYCLE.ROUTINE)
+        
     def _hook_on_batch_forward(self, ctx):
+        ctx.local_steps += 1
+        ctx.total_steps += 1
+        
         input_ids = ctx.data_batch['input_ids'].to(ctx.device)
         labels = ctx.data_batch['label'].to(ctx.device)
         attention_mask = ctx.data_batch['attention_mask'].to(ctx.device)
-        
         if ctx.cfg.llm.deepspeed.use:
             outputs = ctx.model_engine(input_ids=input_ids,
                                        labels=labels,
@@ -269,8 +274,8 @@ class LoRA2GLUETrainer(GeneralTorchTrainer):
 
 def call_glue_trainer(trainer_type):
     if trainer_type == 'lora2gluetrainer':
-        trainer_builder = LoRA2GLUETrainer
+        trainer_builder = LoRA2PlusGLUETrainer
         return trainer_builder
 
 
-register_trainer('lora2gluetrainer', call_glue_trainer)
+register_trainer('lora2plusgluetrainer', call_glue_trainer)

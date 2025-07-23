@@ -37,6 +37,8 @@ def extend_fl_setting_cfg(cfg):
     cfg.federate.method = "FedAvg"
     cfg.federate.ignore_weight = False
     cfg.federate.freeze_A = False   # added by me, for FFA-LoRA
+    cfg.federate.alternate_training = False   # added by me, for FFA-LoRA-A2-Plus
+    cfg.federate.alternate_communication = False   # added by me, for FFA-LoRA-A2-Plus
     cfg.federate.use_ss = False  # Whether to apply Secret Sharing
     cfg.federate.restore_from = ''
     cfg.federate.save_to = ''

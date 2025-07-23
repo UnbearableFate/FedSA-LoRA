@@ -1,0 +1,46 @@
+# LLM+LoRA 联邦微调（federatedscope/llm 与 federatedscope/glue）规则
+
+## 目录定位
+- `federatedscope/llm`：面向大语言模型（LLM）的生成式任务联邦微调，集成 LoRA/Adapter 等高效参数微调方法。
+- `federatedscope/glue`：面向 GLUE/NLP 分类任务的联邦微调，支持 LLM+LoRA/Adapter。
+
+## 关键模块
+- `trainer/trainer.py`：定义 LLMTrainer/GLUETrainer，负责训练流程（支持 DeepSpeed、FP16、LoRA/Adapter 插入、优化器、调度器等）。
+- `model/adapter_builder.py`：
+  - `enable_adapter` 支持多种 Adapter 包（如 PEFT、AdapterHub），可插入 LoRA、Prefix Tuning、Prompt Tuning、VeRA 等。
+  - `AdapterModel` 包装原 HuggingFace 模型，支持 Adapter 动态插入、只同步/聚合可训练参数（如 LoRA 层）、保存/加载、生成等。
+- `model/model_builder.py`：加载 HuggingFace/ModelScope 预训练模型，插入 AdapterModel，支持 tokenizer 扩展、embedding resize、初始参数保存、参数冻结（如 FFA-LoRA/FedSA-LoRA）。
+- `yamls/fedsa-lora.yaml`：典型配置，指定 LoRA/Adapter 类型、参数个性化、冻结策略、数据集、优化器、训练步数等。
+
+## 参数个性化与选择性聚合
+- 通过 `personalization.local_param` 指定本地化参数（如 LoRA_B、分类头），其余参数参与全局聚合（如 LoRA_A）。
+- 支持 `federate.freeze_A` 冻结 LoRA 的 A 矩阵，实现 FFA-LoRA/FedSA-LoRA 等论文变体。
+- `AdapterModel.get_trainable_state_dict` 只同步/聚合可训练参数，便于个性化与选择性聚合。
+
+## 配置驱动
+- 所有关键行为（模型、adapter、冻结、个性化、优化器等）均可通过 YAML 配置灵活控制，便于实验复现和扩展。
+- 典型配置片段：
+```yaml
+llm:
+  adapter:
+    use: True
+    args: [ { 'adapter_package': 'peft', 'adapter_method': 'lora', 'r': 8, 'lora_alpha': 16, 'lora_dropout': 0.05 } ]
+personalization: 
+  local_param: ['lora_B', 'classifier']
+federate:
+  freeze_A: False
+model:
+  type: 'FacebookAI/roberta-large@huggingface_llm'
+```
+
+## 适配任务
+- `llm` 目录多为生成式任务（Causal LM），`glue` 目录多为分类任务（Sequence Classification），adapter 插入时 `TaskType` 区分。
+
+## 参考
+- 训练流程高度模块化，所有关键行为均可配置，便于扩展和复现前沿论文方法（如 FedSA-LoRA、FFA-LoRA 等）。
+
+本规则用于帮助 AI 智能理解和导航 LLM+LoRA 联邦微调相关代码结构、机制与配置方式。
+description:
+globs:
+alwaysApply: false
+---

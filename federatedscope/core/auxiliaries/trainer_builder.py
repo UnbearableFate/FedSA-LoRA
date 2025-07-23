@@ -30,7 +30,8 @@ TRAINER_CLASS_DICT = {
     "lptrainer": "LPTrainer",
     "atc_trainer": "ATCTrainer",
     "llmtrainer": "LLMTrainer",
-    "gluetrainer": "GLUETrainer"    # added by me, for GLUE tasks
+    "gluetrainer": "GLUETrainer",    # added by me, for GLUE tasks
+    "lora2gluetrainer": "LoRA2GLUETrainer"    # added by me, for GLUE tasks
 }
 
 
@@ -164,6 +165,9 @@ def get_trainer(model=None,
         # added by me, for GLUE tasks
         elif config.trainer.type.lower() in ['gluetrainer']:
             dict_path = "federatedscope.glue.trainer.trainer"
+        # for LoRA-A2 GLUE tasks
+        elif config.trainer.type.lower() in ['lora2gluetrainer']:
+            dict_path = "federatedscope.glue_a2.trainer.trainer"
         else:
             raise ValueError
 

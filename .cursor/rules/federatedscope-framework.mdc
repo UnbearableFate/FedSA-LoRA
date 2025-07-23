@@ -1,0 +1,41 @@
+# FederatedScope 框架详细规则
+
+## 架构与核心理念
+- FederatedScope 采用**事件驱动（event-driven）/消息驱动（message-oriented）架构**，将联邦学习过程抽象为一系列事件（如消息传递、条件触发）与对应的 handler（处理函数）对。
+- 支持灵活表达异构消息交换与丰富的参与方行为，便于扩展和自定义。
+
+## 主要模块
+- **Worker 模块**：包括 Server 和 Client，分别负责协调/聚合与本地训练。
+  - Worker 具备唯一 ID、本地数据、模型、Trainer/Aggregator、Communicator 等属性。
+- **Trainer/Aggregator**：Trainer 封装本地训练细节，Aggregator 封装聚合算法，均通过高层接口（如 train/aggregate）与 Worker 解耦。
+- **Communicator**：负责消息收发，屏蔽底层通信细节，支持 standalone（模拟）与分布式（gRPC）两种模式。
+- **Message**：所有参与方间交换的信息均抽象为消息，包含 type、sender、receiver、payload 等字段。
+
+## 事件驱动机制
+- 事件分为两类：
+  1. **消息传递相关**（如收到模型参数、更新等）
+  2. **条件检测相关**（如 all_received、goal_achieved、time_up 等）
+- 用户可通过注册事件-handler 对，灵活定制参与方行为，实现同步/异步训练、个性化、异构目标等。
+
+## 主要内置功能
+- **个性化（Personalization）**：支持多种 SOTA 个性化算法（如 FedBN、pFedMe、Ditto、FedEM），可通过配置或继承实现。
+- **自动调参（Auto-tuning）**：内置 HPO（如 grid/random search、Hyperband、FedEx），支持低保真度调参与联邦 HPO。
+- **隐私保护（Privacy Protection）**：支持差分隐私（DP）、同态加密（Paillier）、噪声注入、梯度裁剪等，可作为插件灵活组合。
+- **攻击模拟（Attack Simulation）**：内置多种隐私攻击（如 DLG、iDLG、GRADINV、PIA、DMUGAN）与后门攻击（BadNets、WaNet、Neurotoxin 等），便于验证算法鲁棒性。
+- **DataZoo/ModelZoo/AlgoZoo**：统一管理常用数据集、模型和算法，便于复现实验和公平对比。
+
+## 扩展与自定义
+- 用户可通过继承 Trainer/Aggregator、注册新事件-handler、定义新消息类型等方式，灵活扩展算法、通信协议、攻击/防御机制等。
+- 支持跨后端（如 PyTorch/TensorFlow）混合部署，通过消息格式约定实现互操作。
+- 通过配置文件（YAML）灵活指定训练流程、算法、数据、模型、隐私/攻击/调参插件等。
+
+## 参考
+- 官方文档：https://federatedscope.io/
+- 论文：https://arxiv.org/abs/2204.05011
+- 代码仓库：https://github.com/alibaba/FederatedScope
+
+本规则用于帮助 AI 深入理解 federatedscope 代码结构、核心机制与扩展方式，提升代码导航与智能辅助能力。
+description:
+globs:
+alwaysApply: false
+---

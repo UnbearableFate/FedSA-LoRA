@@ -148,3 +148,4 @@ data/
 exp/
 models*/
 *.sh.o*
+wandb/

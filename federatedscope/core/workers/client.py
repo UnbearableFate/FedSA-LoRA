@@ -324,6 +324,7 @@ class Client(BaseClient):
             self.trainer.update(content,
                                 strict=self._cfg.federate.share_local_model)
             self.state = round
+            self.trainer.ctx.round = self.state
             skip_train_isolated_or_global_mode = \
                 self.early_stopper.early_stopped and \
                 self._cfg.federate.method in ["local", "global"]
@@ -430,6 +431,8 @@ class Client(BaseClient):
                     else:
                         shared_model_para = symmetric_uniform_quantization(
                             shared_model_para, nbits)
+                
+                logger.info(f"client {self.ID} : upload {lora_send_log_info(shared_model_para)} in round {self.state}")
 
                 self.comm_manager.send(
                     Message(msg_type='model_para',
@@ -608,3 +611,13 @@ class Client(BaseClient):
     @classmethod
     def get_msg_handler_dict(cls):
         return cls().msg_handlers_str
+
+def lora_send_log_info(model_para):
+    lora_a_count = 0
+    lora_b_count = 0
+    for name in model_para.keys():
+        if "lora_A" in name:
+            lora_a_count += 1
+        elif "lora_B" in name:
+            lora_b_count += 1
+    return f"lora_A {lora_a_count} lora_B {lora_b_count} "

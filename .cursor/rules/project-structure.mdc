@@ -1,0 +1,23 @@
+# FedSA-LoRA Project Structure Guide
+
+- 主入口文件为 [federatedscope/main.py](mdc:federatedscope/main.py)。
+- 配置文件示例为 [federatedscope/glue/yamls/fedsa-lora.yaml](mdc:federatedscope/glue/yamls/fedsa-lora.yaml)。
+- 依赖和安装说明见 [README.md](mdc:README.md)。
+- 主要代码位于 [federatedscope/](mdc:federatedscope/) 目录下，包含核心逻辑、模型、数据处理等子模块。
+- 实验相关内容位于 [exp/](mdc:exp/) 目录。
+- 脚本和工具位于 [scripts/](mdc:scripts/) 目录。
+- 图示和论文框架见 [figs/](mdc:figs/) 目录。
+
+## 快速开始
+
+1. 按 [README.md](mdc:README.md) 安装依赖。
+2. 运行如下命令启动训练：
+   ```shell
+   python federatedscope/main.py --cfg federatedscope/glue/yamls/fedsa-lora.yaml
+   ```
+
+本规则用于帮助 AI 理解项目结构、入口和配置文件位置。
+description:
+globs:
+alwaysApply: false
+---

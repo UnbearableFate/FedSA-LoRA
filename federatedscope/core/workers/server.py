@@ -745,6 +745,8 @@ class Server(BaseServer):
         # We define the evaluation happens at the end of an epoch
         rnd = self.state - 1 if msg_type == 'evaluate' else self.state
 
+        logger.info(f"server : broadcast {msg_type} {lora_send_log_info(model_para)} in round {self.state}")
+
         self.comm_manager.send(
             Message(msg_type=msg_type,
                     sender=self.ID,
@@ -1111,3 +1113,14 @@ class Server(BaseServer):
     @classmethod
     def get_msg_handler_dict(cls):
         return cls().msg_handlers_str
+
+
+def lora_send_log_info(model_para):
+    lora_a_count = 0
+    lora_b_count = 0
+    for name in model_para.keys():
+        if "lora_A" in name:
+            lora_a_count += 1
+        elif "lora_B" in name:
+            lora_b_count += 1
+    return f"lora_A {lora_a_count} lora_B {lora_b_count} "

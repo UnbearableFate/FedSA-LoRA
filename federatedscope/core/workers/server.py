@@ -711,7 +711,7 @@ class Server(BaseServer):
 
         skip_broadcast = self._cfg.federate.method in ["local", "global"]
         communication_name = None
-        if self._cfg.federate.alternate_communication and self.state > 0:
+        if not self._cfg.federate.alternate_training and self._cfg.federate.alternate_communication and self.state > 0:
             communication_name = "lora_A" if (self.state-1) % 2 == 0 else "lora_B"
         if self._cfg.federate.share_local_model and not \
                 self._cfg.federate.online_aggr:

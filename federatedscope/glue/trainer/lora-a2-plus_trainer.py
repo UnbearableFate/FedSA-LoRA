@@ -83,6 +83,19 @@ class LoRA2PlusGLUETrainer(GeneralTorchTrainer):
                     elif "lora_B" in name:
                         param.requires_grad = not train_A
                 logger.info(f"prepare train lora {'A' if train_A else 'B'} in round {round_num}")
+                
+                ctx.grad_keeper_lora_A = CtxVar({}, LIFECYCLE.ROUTINE)
+                ctx.grad_keeper_lora_B = CtxVar({}, LIFECYCLE.ROUTINE)
+                
+                if train_A:
+                    for name, param in ctx.model.named_parameters():
+                        if "lora_B" in name and param.grad is not None:
+                            ctx.grad_keeper_lora_B[name] = param.grad
+                else:
+                    for name, param in ctx.model.named_parameters():
+                        if "lora_A" in name and param.grad is not None:
+                            ctx.grad_keeper_lora_A[name] = param.grad
+                logger.info(f"grad keeper lora A: {len(ctx.grad_keeper_lora_A.keys())}, lora B: {len(ctx.grad_keeper_lora_B.keys())}")
 
         # prepare statistics
         ctx.loss_batch_total = CtxVar(0., LIFECYCLE.ROUTINE)
@@ -141,6 +154,19 @@ class LoRA2PlusGLUETrainer(GeneralTorchTrainer):
             if ctx.grad_clip > 0:
                 torch.nn.utils.clip_grad_norm_(ctx.model.parameters(),
                                                ctx.grad_clip)
+
+        if ctx.lora_train_part == "lora_A":
+            for name, param in ctx.model.named_parameters():
+                if name in ctx.grad_keeper_lora_B:
+                    if param.grad is not None:
+                        logger.warning(f"lora B grad is not None, {name}")
+                    param.grad = ctx.grad_keeper_lora_B[name]
+        else:
+            for name, param in ctx.model.named_parameters():
+                if name in ctx.grad_keeper_lora_A:
+                    if param.grad is not None:
+                        logger.warning(f"lora A grad is not None, {name}")
+                    param.grad = ctx.grad_keeper_lora_A[name]
 
             ctx.optimizer.step()
         if ctx.scheduler is not None:
@@ -273,7 +299,7 @@ class LoRA2PlusGLUETrainer(GeneralTorchTrainer):
         return result
 
 def call_glue_trainer(trainer_type):
-    if trainer_type == 'lora2gluetrainer':
+    if trainer_type == 'lora2plusgluetrainer':
         trainer_builder = LoRA2PlusGLUETrainer
         return trainer_builder
 

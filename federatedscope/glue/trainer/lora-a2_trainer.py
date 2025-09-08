@@ -52,27 +52,27 @@ class LoRA2GLUETrainer(GeneralTorchTrainer):
                 # Initialize optimizer here to avoid the reuse of optimizers
                 # across different routines
                 
-                if not hasattr(ctx, 'optimizer') or not hasattr(ctx, 'scheduler') or ctx.optimizer is None or ctx.scheduler is None:
-                    if ctx.cfg.llm.adapter.args[0].get('adapter_method', '') == "vera":
-                        # added by me, for VeRA, introduce separate learning rates for the classification head and the adapted layers
-                        vera_params = [param for name, param in ctx.model.named_parameters() if "vera" in name and param.requires_grad]
-                        other_params = [param for name, param in ctx.model.named_parameters() if "vera" not in name and param.requires_grad]
-                        optimizer_grouped_parameters = [
-                            {'params': vera_params, 'lr': ctx.cfg.train.optimizer.lr},
-                            {'params': other_params, 'lr': ctx.cfg.train.vera.lr_c}
-                        ]
-                        from transformers import AdamW, get_linear_schedule_with_warmup
-                        ctx.optimizer = AdamW(optimizer_grouped_parameters, no_deprecation_warning=True)
-                        ctx.scheduler = get_linear_schedule_with_warmup(
-                                        ctx.optimizer, 
-                                        num_warmup_steps=0.06 * ctx.cfg.train.local_update_steps * ctx.cfg.federate.total_round_num, 
-                                        num_training_steps=ctx.cfg.train.local_update_steps * ctx.cfg.federate.total_round_num
-                        )
-                    else:
-                        ctx.optimizer = get_optimizer(
-                            ctx.model, **ctx.cfg[ctx.cur_mode].optimizer)
-                        ctx.scheduler = get_scheduler(
-                            ctx.optimizer, **ctx.cfg[ctx.cur_mode].scheduler)
+                #if not hasattr(ctx, 'optimizer') or not hasattr(ctx, 'scheduler') or ctx.optimizer is None or ctx.scheduler is None:
+                if ctx.cfg.llm.adapter.args[0].get('adapter_method', '') == "vera":
+                    # added by me, for VeRA, introduce separate learning rates for the classification head and the adapted layers
+                    vera_params = [param for name, param in ctx.model.named_parameters() if "vera" in name and param.requires_grad]
+                    other_params = [param for name, param in ctx.model.named_parameters() if "vera" not in name and param.requires_grad]
+                    optimizer_grouped_parameters = [
+                        {'params': vera_params, 'lr': ctx.cfg.train.optimizer.lr},
+                        {'params': other_params, 'lr': ctx.cfg.train.vera.lr_c}
+                    ]
+                    from transformers import AdamW, get_linear_schedule_with_warmup
+                    ctx.optimizer = AdamW(optimizer_grouped_parameters, no_deprecation_warning=True)
+                    ctx.scheduler = get_linear_schedule_with_warmup(
+                                    ctx.optimizer, 
+                                    num_warmup_steps=0.06 * ctx.cfg.train.local_update_steps * ctx.cfg.federate.total_round_num, 
+                                    num_training_steps=ctx.cfg.train.local_update_steps * ctx.cfg.federate.total_round_num
+                    )
+                else:
+                    ctx.optimizer = get_optimizer(
+                        ctx.model, **ctx.cfg[ctx.cur_mode].optimizer)
+                    ctx.scheduler = get_scheduler(
+                        ctx.optimizer, **ctx.cfg[ctx.cur_mode].scheduler)
                 
                 # LoRA-A2: 每轮交替只训练A或B
                 if ctx.cfg.federate.alternate_training:

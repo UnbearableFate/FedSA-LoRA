@@ -28,7 +28,7 @@ llm:
 #    use: True
 #    ds_config: federatedscope/glue/yamls/ds_config_zero2_cpuoffload.json
 dataloader:
-  batch_size: 8
+  batch_size: 128
 model:
   type: 'FacebookAI/roberta-large@huggingface_llm'
 train:

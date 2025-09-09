@@ -13,6 +13,9 @@ def extend_fl_setting_cfg(cfg):
     # ---------------------------------------------------------------------- #
     cfg.federate = CN()
 
+    cfg.federate.use_mask = False  # whether to use mask in federated
+    cfg.federate.sparsity_ratios = 0.8  # the sparsity ratios for
+
     cfg.federate.client_num = 0
     cfg.federate.client_idx_for_local_train = 0
     cfg.federate.sample_client_num = -1

@@ -62,18 +62,28 @@ def check_sparsity(model):
     return layer_sparsity, total_sparsity
 
 
-def get_model_mask(model, sparsity_ratios, save_path):
-    mask_dict = {name: param for name, param in model.named_parameters() if "lora_B.mask" in name}
+def get_some_model_masks(model, sparsity_ratios, save_path, which_lora=["B"]):
+    masks = {}
+    for lora in which_lora:
+        res = get_model_mask(model, sparsity_ratios, save_path, which_lora=lora)
+        masks.update(res)
+    return masks
+
+def get_model_mask(model, sparsity_ratios, save_path, which_lora="B"):
+    mask_dict = {name: param for name, param in model.named_parameters() if f"lora_{which_lora}.mask" in name}
     all_params_abs = []
     for name, p in model.named_parameters():
-        if 'lora_B.default.weight' in name:
+        if f'lora_{which_lora}.default.weight' in name:
             param_values = p.data.view(-1)
             if mask_dict:
-                mask_name = name.replace("lora_B.default.weight", "lora_B.mask")
+                mask_name = name.replace(f"lora_{which_lora}.default.weight", f"lora_{which_lora}.mask")
                 constraint = mask_dict[mask_name].view(-1)
                 param_values[constraint] = 0
             all_params_abs.append(torch.abs(param_values).cpu())
 
+    if len(all_params_abs) == 0:
+        print(f"No LoRA parameters found for lora_{which_lora}.")
+        return None
     all_params_abs = torch.cat(all_params_abs)
     total_num = all_params_abs.numel()
     
@@ -85,19 +95,18 @@ def get_model_mask(model, sparsity_ratios, save_path):
         retained_num = 0
         constrained_mask = {}
         for name, param in model.named_parameters():
-            if 'lora_B.default.weight' in name:
+            if f'lora_{which_lora}.default.weight' in name:
                 constrained_mask[name] = (torch.abs(param.data) >= threshold).to('cpu')
                 if mask_dict:
-                    mask_name = name.replace("lora_B.default.weight", "lora_B.mask")
+                    mask_name = name.replace(f"lora_{which_lora}.default.weight", f"lora_{which_lora}.mask")
                     constrained_mask[name] = constrained_mask[name] & ~mask_dict[mask_name]
                 retained_num += constrained_mask[name].sum().item()
 
         print(f"{(100 * retained_num / total_num):.2f}% of parameters will be retained.")
         os.makedirs(os.path.join(save_path, "masks"), exist_ok=True)
-        torch.save(constrained_mask, f"{save_path}/masks/{sparsity_ratio}_mask.pt")
-        print(f"Model mask saved to {save_path}/masks/{sparsity_ratio}_mask.pt")
-    
-    return
+        torch.save(constrained_mask, f"{save_path}/masks/{sparsity_ratio}_{which_lora}_mask.pt")
+        print(f"Model mask saved to {save_path}/masks/{sparsity_ratio}_{which_lora}_mask.pt")
+    return constrained_mask
 
 
 def get_modulewise_mask(model, sparsity_ratios, save_path):

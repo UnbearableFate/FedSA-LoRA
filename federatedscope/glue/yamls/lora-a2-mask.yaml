@@ -5,14 +5,17 @@ early_stop:
   patience: 0
 federate:
   freeze_A: False
+  alternate_training: True
+  alternate_communication: True
   mode: standalone
   client_num: 3
   total_round_num: 1000
-  save_to: "fedsa-lora_mnli-m.ckpt"
+  save_to: "fedsa-lora_a2_masked_mnli-m.ckpt"
   share_local_model: True
   online_aggr: False
+  use_mask: True  # whether to use mask in federated
 personalization: 
-  local_param: ['lora_B', 'classifier']
+  local_param: ['classifier']
 data:
   root: data/
   type: 'mnli@glue'
@@ -28,11 +31,11 @@ llm:
 #    use: True
 #    ds_config: federatedscope/glue/yamls/ds_config_zero2_cpuoffload.json
 dataloader:
-  batch_size: 8
+  batch_size: 128
 model:
   type: 'FacebookAI/roberta-large@huggingface_llm'
 train:
-  local_update_steps: 10
+  local_update_steps: 3
   batch_or_epoch: batch
   optimizer:
     type: SGD
@@ -41,7 +44,7 @@ train:
 criterion:
   type: CrossEntropyLoss
 trainer:
-  type: gluetrainer
+  type: lora2gluetrainer
 eval:
   freq: 1
   metrics: ['accuracy']

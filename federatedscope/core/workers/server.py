@@ -7,6 +7,8 @@ import sys
 import numpy as np
 import pickle
 
+import torch
+
 from federatedscope.core.monitors.early_stopper import EarlyStopper
 from federatedscope.core.message import Message
 from federatedscope.core.communication import StandaloneCommManager, \
@@ -18,6 +20,7 @@ from federatedscope.core.auxiliaries.utils import merge_dict_of_results, \
 from federatedscope.core.auxiliaries.trainer_builder import get_trainer
 from federatedscope.core.secret_sharing import AdditiveSecretSharing
 from federatedscope.core.workers.base_server import BaseServer
+from .extract_mask import get_some_model_masks
 
 logger = logging.getLogger(__name__)
 if get_ds_rank() == 0:
@@ -499,6 +502,11 @@ class Server(BaseServer):
             # Due to lazy load, we merge two state dict
             merged_param = merge_param_dict(model.state_dict().copy(), result)
             model.load_state_dict(merged_param, strict=False)
+            if self._cfg.federate.use_mask:
+                masks = get_some_model_masks(model, [0.8], "/work/xg24i002/x10041/FedSA-LoRA/mask",["A","B"])
+                for name, param in model.named_parameters():
+                    if name in masks:
+                        param.data = param.data * masks[name].float().to(param.device)
 
         return aggregated_num
 

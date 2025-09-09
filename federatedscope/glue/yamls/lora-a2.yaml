@@ -9,7 +9,7 @@ federate:
   alternate_communication: True
   mode: standalone
   client_num: 3
-  total_round_num: 1000
+  total_round_num: 100
   save_to: "fedsa-lora_a2_mnli-m.ckpt"
   share_local_model: True
   online_aggr: False
@@ -30,11 +30,11 @@ llm:
 #    use: True
 #    ds_config: federatedscope/glue/yamls/ds_config_zero2_cpuoffload.json
 dataloader:
-  batch_size: 128
+  batch_size: 8
 model:
   type: 'FacebookAI/roberta-large@huggingface_llm'
 train:
-  local_update_steps: 3
+  local_update_steps: 10
   batch_or_epoch: batch
   optimizer:
     type: SGD
@@ -45,7 +45,7 @@ criterion:
 trainer:
   type: lora2gluetrainer
 eval:
-  freq: 1
+  freq: 2
   metrics: ['accuracy']
   count_flops: False
   best_res_update_round_wise_key: 'val_accuracy'

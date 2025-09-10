@@ -1,16 +1,16 @@
-seed: 123
+seed: 43
 use_gpu: True
 device: 0
 early_stop:
   patience: 0
 federate:
-  freeze_A: False
-  alternate_training: True
-  alternate_communication: True
+  freeze_A: True
+  alternate_training: False
+  alternate_communication: False
   mode: standalone
-  client_num: 3
+  client_num: 2
   total_round_num: 500
-  save_to: "fedsa-lora_a2_mnli-m.ckpt"
+  save_to: "ffa-lora_mnli-m.ckpt"
   share_local_model: True
   online_aggr: False
 personalization: 
@@ -43,11 +43,11 @@ train:
 criterion:
   type: CrossEntropyLoss
 trainer:
-  type: lora2gluetrainer
+  type: gluetrainer
 eval:
   freq: 2
   metrics: ['accuracy']
   count_flops: False
   best_res_update_round_wise_key: 'val_accuracy'
 wandb:
-  use: True
+  use: False
